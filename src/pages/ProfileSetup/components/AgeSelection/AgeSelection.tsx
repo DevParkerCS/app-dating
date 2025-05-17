@@ -5,6 +5,8 @@ import DateTimePicker, {
 import { useState } from "react";
 import { useUser } from "../../../../context/UserContext";
 import { SelectionProps } from "../../ProfileSetup";
+import selectionStyles from "../../SelectionStyle";
+import ageStyles from "./AgeSelectionStyles";
 
 export const AgeSelection = ({ setCurStep }: SelectionProps) => {
   const [show, setShow] = useState(false);
@@ -17,25 +19,35 @@ export const AgeSelection = ({ setCurStep }: SelectionProps) => {
   };
 
   return (
-    <View>
-      <View>
-        <Text>Hey, {user?.firstName}</Text>
+    <View style={selectionStyles.container}>
+      <View style={selectionStyles.contentWrapper}>
+        <View style={selectionStyles.titleWrapper}>
+          <Text style={selectionStyles.title}>Hey, {user?.firstName}</Text>
+        </View>
+        <View>
+          <Text style={selectionStyles.subTitle}>
+            Next, When Were You Born?
+          </Text>
+          <View style={ageStyles.ageInputWrapper}>
+            <DateTimePicker
+              testID="dateTimePicker"
+              value={user?.dob || new Date()}
+              mode="date"
+              is24Hour={true}
+              display="default"
+              onChange={onChange}
+              maximumDate={new Date()}
+              style={ageStyles.ageInput}
+            />
+          </View>
+        </View>
+        <Pressable
+          style={selectionStyles.btn}
+          onPress={() => setCurStep((prev) => prev + 1)}
+        >
+          <Text style={selectionStyles.btnTxt}>Next</Text>
+        </Pressable>
       </View>
-      <View>
-        <Text>Next, When Were You Born?</Text>
-        <DateTimePicker
-          testID="dateTimePicker"
-          value={user?.dob || new Date()}
-          mode="date"
-          is24Hour={true}
-          display="default"
-          onChange={onChange}
-          maximumDate={new Date()}
-        />
-      </View>
-      <Pressable onPress={() => setCurStep((prev) => prev + 1)}>
-        <Text>Next</Text>
-      </Pressable>
     </View>
   );
 };

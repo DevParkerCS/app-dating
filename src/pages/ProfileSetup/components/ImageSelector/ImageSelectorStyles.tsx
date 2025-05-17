@@ -1,15 +1,12 @@
 import { StyleSheet } from "react-native";
 
 export default StyleSheet.create({
-  container: {
-    padding: 10,
-  },
   imageGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "flex-start",
     gap: 10,
-    padding: 10,
+    marginTop: 10,
   },
   imageContainer: {
     width: "31%", // Approximately 3 images per row with gap

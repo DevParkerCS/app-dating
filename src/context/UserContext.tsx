@@ -5,6 +5,11 @@ type GeoPoint = {
   coordinates: [number, number];
 };
 
+export type PromptType = {
+  title: string;
+  text: string;
+};
+
 export type User = {
   id: number;
   firstName: string;
@@ -14,7 +19,7 @@ export type User = {
   curLikes: number;
   location: GeoPoint;
   imageUrls: string[];
-  prompts: string[];
+  prompts: PromptType[];
 };
 
 export type StoredUser = User & {

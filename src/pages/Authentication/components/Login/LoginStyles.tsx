@@ -10,7 +10,6 @@ export default StyleSheet.create({
   },
   loginWrapper: {
     width: "90%",
-    padding: 20,
     borderRadius: 15,
   },
   title: {

@@ -6,22 +6,26 @@ import {
   ScrollView,
   Text,
   Pressable,
+  ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons"; // or whatever icon library you're using
 import { useUser } from "../../../../context/UserContext";
 import { SelectionProps } from "../../ProfileSetup";
 import styles from "./ImageSelectorStyles";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { uploadImage } from "../../../../utils/UploadImage";
 import axios from "axios";
 import * as ImageManipulator from "expo-image-manipulator";
+import selectionStyle from "../../SelectionStyle";
 
 export const ImageSelector = ({ setCurStep }: SelectionProps) => {
   const [tmpImages, setTmpImages] = useState<string[]>([]);
+  const [readyToUpload, setReadyToUpload] = useState<boolean>(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [isValidating, setIsValidating] = useState(false);
   const { user, setUser } = useUser();
 
   const pickImage = async () => {
-    console.log("INHERE\n");
     const permissionResult =
       await ImagePicker.requestMediaLibraryPermissionsAsync();
 
@@ -42,6 +46,7 @@ export const ImageSelector = ({ setCurStep }: SelectionProps) => {
       });
 
       if (!result.canceled && result.assets) {
+        setIsValidating(true);
         const pickedImage = result.assets[0];
         const manipulatedImage = await ImageManipulator.manipulateAsync(
           pickedImage.uri,
@@ -50,6 +55,7 @@ export const ImageSelector = ({ setCurStep }: SelectionProps) => {
         );
 
         setTmpImages([...tmpImages, manipulatedImage.uri]);
+        setIsValidating(false);
       }
     } catch (error) {
       console.error("Error picking images:", error);
@@ -62,10 +68,8 @@ export const ImageSelector = ({ setCurStep }: SelectionProps) => {
   };
 
   const handleUpload = async () => {
-    console.log("Uploading");
     if (user) {
-      console.log("Into");
-
+      setIsUploading(true);
       for (let i = 0; i < tmpImages.length; i++) {
         try {
           const imageUrl = await uploadImage(tmpImages[i], user.id.toString());
@@ -82,46 +86,77 @@ export const ImageSelector = ({ setCurStep }: SelectionProps) => {
           return;
         }
       }
-      console.log("Uploaded");
-      const response = await axios.patch(
-        "http://10.20.8.13:3000/users/updateProfile",
-        {
-          user,
-        }
-      );
-      setCurStep((prev) => prev + 1);
+
+      setReadyToUpload(true);
     }
   };
-  console.log(tmpImages);
+
+  const updateUser = async () => {
+    const response = await axios.patch(
+      "http://10.20.8.13:3000/users/updateProfile",
+      {
+        user,
+      }
+    );
+    setIsUploading(false);
+  };
+
+  useEffect(() => {
+    if (readyToUpload) {
+      setReadyToUpload(false);
+      updateUser();
+      setCurStep((prev) => prev + 1);
+    }
+  }, [readyToUpload, user]);
+
   return (
-    <View style={styles.container}>
-      <ScrollView contentContainerStyle={styles.imageGrid}>
-        {tmpImages.map((uri, index) => (
-          <View key={index} style={styles.imageContainer}>
-            <Image source={{ uri }} style={styles.image} />
+    <View style={[selectionStyle.container]}>
+      <View style={selectionStyle.contentWrapper}>
+        <Text style={selectionStyle.subTitle}>Let's Get Some Pics!</Text>
+        <ScrollView contentContainerStyle={styles.imageGrid}>
+          {tmpImages.map((uri, index) => (
+            <View key={index} style={styles.imageContainer}>
+              <Image source={{ uri }} style={styles.image} />
+              <TouchableOpacity
+                style={styles.removeButton}
+                onPress={() => removeImage(index)}
+              >
+                <Ionicons name="close-circle" size={24} color="red" />
+              </TouchableOpacity>
+            </View>
+          ))}
+
+          {tmpImages.length < 6 && (
             <TouchableOpacity
-              style={styles.removeButton}
-              onPress={() => removeImage(index)}
+              style={styles.addImageButton}
+              onPress={!isUploading ? pickImage : () => {}}
             >
-              <Ionicons name="close-circle" size={24} color="red" />
+              {!isValidating ? (
+                <>
+                  <Ionicons name="add-circle" size={40} color="#666" />
+                  <Text style={styles.addImageText}>Add Photo</Text>
+                </>
+              ) : (
+                <ActivityIndicator size={"large"} />
+              )}
             </TouchableOpacity>
+          )}
+        </ScrollView>
+
+        <Text style={styles.helpText}>
+          {tmpImages.length + "/6 photos selected`"}
+        </Text>
+        {isUploading ? (
+          <View>
+            <Text>Uploading Images</Text>
+            <ActivityIndicator />
           </View>
-        ))}
-
-        {tmpImages.length < 6 && (
-          <TouchableOpacity style={styles.addImageButton} onPress={pickImage}>
-            <Ionicons name="add-circle" size={40} color="#666" />
-            <Text style={styles.addImageText}>Add Photo</Text>
-          </TouchableOpacity>
+        ) : (
+          <Pressable style={selectionStyle.btn} onPress={handleUpload}>
+            <Text style={selectionStyle.btnTxt}>Upload</Text>
+          </Pressable>
         )}
-      </ScrollView>
-
-      <Text style={styles.helpText}>
-        {tmpImages.length + "/6 photos selected`"}
-      </Text>
-      <Pressable onPress={handleUpload}>
-        <Text>Upload</Text>
-      </Pressable>
+      </View>
     </View>
   );
 };

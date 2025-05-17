@@ -3,6 +3,7 @@ import { View, Text, Pressable } from "react-native";
 import * as Location from "expo-location";
 import { useUser } from "../../../../context/UserContext";
 import { SelectionProps } from "../../ProfileSetup";
+import selectionStyle from "../../SelectionStyle";
 
 export const LocationSelection = ({ setCurStep }: SelectionProps) => {
   const [locationPrompted, setLocationPrompted] = useState(false);
@@ -21,7 +22,7 @@ export const LocationSelection = ({ setCurStep }: SelectionProps) => {
         const { status: newStatus } =
           await Location.requestForegroundPermissionsAsync();
         if (newStatus !== "granted") {
-          alert("Permission to access location was denied");
+          alert("Please turn on location permission to continue");
           return;
         }
       }
@@ -40,13 +41,24 @@ export const LocationSelection = ({ setCurStep }: SelectionProps) => {
   };
 
   return (
-    <View>
-      <Text>
-        Awesome! Next We Need Your Location To Match You To People Near You!
-      </Text>
-      <Pressable onPress={requestLocation} disabled={isLoading}>
-        <Text>{isLoading ? "Getting Location..." : "Allow Location"}</Text>
-      </Pressable>
+    <View style={selectionStyle.container}>
+      <View style={selectionStyle.contentWrapper}>
+        <View style={selectionStyle.titleWrapper}>
+          <Text style={selectionStyle.title}>Love Is In The Air!</Text>
+        </View>
+        <Text style={selectionStyle.subTitle}>
+          Next We Need Your Location To Match You To People Near You!
+        </Text>
+        <Pressable
+          onPress={requestLocation}
+          style={selectionStyle.btn}
+          disabled={isLoading}
+        >
+          <Text style={selectionStyle.btnTxt}>
+            {isLoading ? "Getting Location..." : "Allow Location"}
+          </Text>
+        </Pressable>
+      </View>
     </View>
   );
 };

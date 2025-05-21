@@ -16,7 +16,11 @@ export const Authentication = () => {
 
   useEffect(() => {
     if (user !== null) {
-      navigation.navigate("ProfileSetup");
+      if (!user.is_profile_complete) {
+        navigation.navigate("ProfileSetup");
+      } else {
+        navigation.navigate("MainTabs", { screen: "Explore" });
+      }
     }
   }, [user]);
 

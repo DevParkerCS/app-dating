@@ -10,27 +10,31 @@ export type PromptType = {
   text: string;
 };
 
+type InterestedIn = {
+  minAge: number;
+  maxAge: number;
+  maxDistance: number;
+  genders: string[];
+};
+
 export type User = {
   id: number;
   firstName: string;
   lastName: string;
   dob: Date;
   gender: string;
+  interestedIn: InterestedIn;
   curLikes: number;
   location: GeoPoint;
   imageUrls: string[];
   prompts: PromptType[];
-};
-
-export type StoredUser = User & {
-  imageUrls: string;
-  prompts: string;
+  is_profile_complete: boolean;
 };
 
 type UserContextType = {
   user: User | null;
   setUser: React.Dispatch<React.SetStateAction<User | null>>;
-  logIn: (userInfo: StoredUser) => void;
+  logIn: (userInfo: User) => void;
   logOut: () => void;
 };
 
@@ -45,7 +49,7 @@ type UserProviderProps = {
 export const UserProvider = ({ children }: UserProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
 
-  const logIn = (userInfo: StoredUser) => {
+  const logIn = (userInfo: User) => {
     setUser({
       ...userInfo,
       dob: new Date(userInfo.dob),

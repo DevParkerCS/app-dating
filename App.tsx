@@ -88,6 +88,7 @@ export default function App() {
               screenOptions={{
                 headerShown: false,
                 contentStyle: { backgroundColor: "lightcyan" },
+                gestureEnabled: false,
               }}
             >
               <Stack.Screen name="Authentication" component={Authentication} />

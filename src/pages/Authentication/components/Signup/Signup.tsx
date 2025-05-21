@@ -12,7 +12,7 @@ import { useRef, useState } from "react";
 import { isValidEmail, isValidPassword } from "../../../../utils/Auth";
 import { Vibration } from "react-native";
 import axios from "axios";
-import { StoredUser, User, useUser } from "../../../../context/UserContext";
+import { User, useUser } from "../../../../context/UserContext";
 
 export const SignUp = () => {
   const [emailInput, setEmailInput] = useState("");
@@ -59,7 +59,7 @@ export const SignUp = () => {
         Vibration.vibrate(500);
         return;
       } else {
-        const user: StoredUser = response.data;
+        const user: User = response.data;
         console.log(user);
         logIn(user);
       }

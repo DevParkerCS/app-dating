@@ -25,9 +25,7 @@ export const AgeSelection = ({ setCurStep }: SelectionProps) => {
           <Text style={selectionStyles.title}>Hey, {user?.firstName}</Text>
         </View>
         <View>
-          <Text style={selectionStyles.subTitle}>
-            Next, When Were You Born?
-          </Text>
+          <Text style={selectionStyles.subTitle}>When Were You Born?</Text>
           <View style={ageStyles.ageInputWrapper}>
             <DateTimePicker
               testID="dateTimePicker"

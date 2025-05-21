@@ -8,7 +8,7 @@ import {
   Pressable,
   ActivityIndicator,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons"; // or whatever icon library you're using
+import { Ionicons } from "@expo/vector-icons";
 import { useUser } from "../../../../context/UserContext";
 import { SelectionProps } from "../../ProfileSetup";
 import styles from "./ImageSelectorStyles";
@@ -19,11 +19,11 @@ import * as ImageManipulator from "expo-image-manipulator";
 import selectionStyle from "../../SelectionStyle";
 
 export const ImageSelector = ({ setCurStep }: SelectionProps) => {
-  const [tmpImages, setTmpImages] = useState<string[]>([]);
   const [readyToUpload, setReadyToUpload] = useState<boolean>(false);
   const [isUploading, setIsUploading] = useState(false);
   const [isValidating, setIsValidating] = useState(false);
   const { user, setUser } = useUser();
+  const [tmpImages, setTmpImages] = useState<string[]>(user?.imageUrls || []);
 
   const pickImage = async () => {
     const permissionResult =

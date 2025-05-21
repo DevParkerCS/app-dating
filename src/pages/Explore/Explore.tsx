@@ -8,12 +8,11 @@ import {
 } from "react-native";
 import { FontAwesome } from "@expo/vector-icons";
 import styles from "./ExploreStyles";
-import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { RootStackParamList } from "../../types/navigations";
+import { useUser } from "../../context/UserContext";
 
-type Props = NativeStackScreenProps<RootStackParamList, "Explore">;
+export const Explore = () => {
+  const { user } = useUser();
 
-export const Explore = ({ navigation, route }: Props) => {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.homeWrapper}>
@@ -22,12 +21,12 @@ export const Explore = ({ navigation, route }: Props) => {
         </View>
         <View style={styles.profileImgWrapper}>
           <ImageBackground
-            source={require("../../../assets/cat.jpg")}
+            source={{ uri: user?.imageUrls[3] }}
             style={styles.profileImg}
             resizeMode="cover"
           />
         </View>
-        <View style={styles.profileTxt}>
+        <View style={styles.promptWrapper}>
           <Text style={styles.promptHeader}>I'm weirdly attracted to</Text>
           <Text style={styles.promptTxt}>
             People who aren't on social media.
@@ -35,7 +34,7 @@ export const Explore = ({ navigation, route }: Props) => {
         </View>
         <View style={styles.profileImgWrapper}>
           <ImageBackground
-            source={require("../../../assets/cat.jpg")}
+            source={{ uri: user?.imageUrls[1] }}
             style={styles.profileImg}
           />
         </View>

@@ -25,7 +25,7 @@ export default StyleSheet.create({
     marginTop: 8,
     marginBottom: 32,
   },
-  profileTxt: {
+  promptWrapper: {
     height: 300,
     marginBottom: 32,
     backgroundColor: "white",

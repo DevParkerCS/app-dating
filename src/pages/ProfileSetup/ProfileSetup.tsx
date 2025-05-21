@@ -17,6 +17,7 @@ import { PromptSelection } from "./components/PromptSelection/PromptSelection";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../../types/navigations";
+import SelectionStyle from "./SelectionStyle";
 
 export type SelectionProps = {
   setCurStep: React.Dispatch<React.SetStateAction<number>>;
@@ -67,16 +68,21 @@ export const ProfileSetup = () => {
       {curStep == 6 && <PromptSelection setCurStep={setCurStep} />}
 
       {curStep > 6 && (
-        <View>
-          <Text>Sweet! We're all done.</Text>
-          <Text>Please Remember To Have Fun, Be Thoughtful, And Kind.</Text>
-          <Pressable
-            onPress={() =>
-              navigation.navigate("MainTabs", { screen: "Explore" })
-            }
-          >
-            <Text>Start Dating</Text>
-          </Pressable>
+        <View style={SelectionStyle.container}>
+          <View style={SelectionStyle.contentWrapper}>
+            <Text style={SelectionStyle.subTitle}>Sweet! We're all done.</Text>
+            <Text style={SelectionStyle.subTitle}>
+              Please Remember To Have Fun, Be Thoughtful, And Kind.
+            </Text>
+            <Pressable
+              style={SelectionStyle.btn}
+              onPress={() =>
+                navigation.navigate("MainTabs", { screen: "Explore" })
+              }
+            >
+              <Text style={SelectionStyle.btnTxt}>Start Dating</Text>
+            </Pressable>
+          </View>
         </View>
       )}
     </SafeAreaView>

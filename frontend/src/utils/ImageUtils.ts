@@ -1,4 +1,10 @@
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import {
+  ref,
+  uploadBytes,
+  getDownloadURL,
+  deleteObject,
+  getStorage,
+} from "firebase/storage";
 import { storage } from "../firebase/config";
 
 export const uploadImage = async (uri: string, userId: string) => {
@@ -22,6 +28,19 @@ export const uploadImage = async (uri: string, userId: string) => {
     return downloadURL;
   } catch (error) {
     console.error("Error uploading image:", error);
+    throw error;
+  }
+};
+
+export const deleteImage = async (path: string) => {
+  try {
+    const storage = getStorage();
+
+    const fileref = ref(storage, path);
+
+    await deleteObject(fileref);
+  } catch (error) {
+    console.error("Error deleting image:", error);
     throw error;
   }
 };

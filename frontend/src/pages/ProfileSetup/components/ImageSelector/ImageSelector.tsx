@@ -13,7 +13,7 @@ import { useUser } from "../../../../context/UserContext";
 import { SelectionProps } from "../../ProfileSetup";
 import styles from "./ImageSelectorStyles";
 import { useEffect, useState } from "react";
-import { uploadImage } from "../../../../utils/UploadImage";
+import { deleteImage, uploadImage } from "../../../../utils/ImageUtils";
 import axios from "axios";
 import * as ImageManipulator from "expo-image-manipulator";
 import selectionStyle from "../../SelectionStyle";
@@ -36,39 +36,63 @@ export const ImageSelector = ({ setCurStep }: SelectionProps) => {
     }
 
     try {
+      setIsValidating(true);
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: "images",
-        allowsEditing: true,
         quality: 0,
-        aspect: [4, 3],
+        aspect: [9, 16],
+        allowsMultipleSelection: true,
         presentationStyle:
           ImagePicker.UIImagePickerPresentationStyle.FULL_SCREEN,
         selectionLimit: 6 - tmpImages.length,
       });
 
       if (!result.canceled && result.assets) {
-        setIsValidating(true);
-        const pickedImage = result.assets[0];
-        const manipulatedImage = await ImageManipulator.manipulateAsync(
-          pickedImage.uri,
-          [{ resize: { width: 500 } }], // Adjust width (height scales to keep aspect ratio)
-          { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
-        );
+        const pickedImages = result.assets;
+        const manipulationPromises = pickedImages.map(async (image) => {
+          const manipulatedImage = await ImageManipulator.manipulateAsync(
+            image.uri,
+            [{ resize: { width: 500 } }],
+            { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
+          );
 
-        setTmpImages([
-          ...tmpImages,
-          { url: manipulatedImage.uri, is_new: true },
-        ]);
-        setIsValidating(false);
+          return { url: manipulatedImage.uri, is_new: true };
+        });
+        const newImages = await Promise.all(manipulationPromises);
+        setTmpImages((prev) => [...prev, ...newImages]);
       }
+      setIsValidating(false);
     } catch (error) {
+      setIsValidating(false);
       console.error("Error picking images:", error);
       alert("Error picking images");
     }
   };
 
-  const removeImage = (indexToRemove: number) => {
-    setTmpImages([...tmpImages.filter((_, index) => index !== indexToRemove)]);
+  const removeImage = async (indexToRemove: number) => {
+    try {
+      if (!tmpImages[indexToRemove].is_new) {
+        await deleteImage(tmpImages[indexToRemove].url);
+
+        setUser((prev) => {
+          if (!prev) {
+            return null;
+          }
+
+          return {
+            ...prev,
+            imageUrls: prev.imageUrls.filter(
+              (img) => img.url !== tmpImages[indexToRemove].url
+            ),
+          };
+        });
+      }
+      setTmpImages([
+        ...tmpImages.filter((_, index) => index !== indexToRemove),
+      ]);
+    } catch (e) {
+      console.log("Error removing image");
+    }
   };
 
   const handleUpload = async () => {
@@ -156,7 +180,7 @@ export const ImageSelector = ({ setCurStep }: SelectionProps) => {
         </ScrollView>
 
         <Text style={styles.helpText}>
-          {tmpImages.length + "/6 photos selected`"}
+          {tmpImages.length + "/6 photos selected"}
         </Text>
         {isUploading ? (
           <View>
@@ -164,8 +188,14 @@ export const ImageSelector = ({ setCurStep }: SelectionProps) => {
             <ActivityIndicator />
           </View>
         ) : (
-          <Pressable style={selectionStyle.btn} onPress={handleUpload}>
-            <Text style={selectionStyle.btnTxt}>Upload</Text>
+          <Pressable
+            style={selectionStyle.btn}
+            disabled={isValidating}
+            onPress={handleUpload}
+          >
+            <Text style={selectionStyle.btnTxt}>
+              {isValidating ? "Validating Images..." : "Upload"}
+            </Text>
           </Pressable>
         )}
       </View>

@@ -12,7 +12,8 @@ import { useRef, useState } from "react";
 import { isValidEmail, isValidPassword } from "../../../../utils/Auth";
 import { Vibration } from "react-native";
 import axios from "axios";
-import { User, useUser } from "../../../../context/UserContext";
+import { useUser } from "../../../../context/UserContext";
+import { PublicUserType } from "../../../../../../shared/types/user";
 
 export const Login = () => {
   const [emailInput, setEmailInput] = useState("");
@@ -59,7 +60,7 @@ export const Login = () => {
         Vibration.vibrate(500);
         return;
       } else {
-        const user: User = response.data;
+        const user: PublicUserType = response.data;
         console.log(user);
         logIn(user);
       }

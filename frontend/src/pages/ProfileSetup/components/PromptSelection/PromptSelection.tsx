@@ -2,7 +2,7 @@ import { View, Text, ScrollView } from "react-native";
 import { SelectionProps } from "../../ProfileSetup";
 import { useState } from "react";
 import { Pressable, TextInput } from "react-native-gesture-handler";
-import { PromptType, useUser } from "../../../../context/UserContext";
+import { useUser } from "../../../../context/UserContext";
 import axios from "axios";
 import styles from "./PromptSelectionStyles";
 import selectionStyle from "../../SelectionStyle";

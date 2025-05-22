@@ -19,13 +19,13 @@ export const NameSelection = ({ setCurStep }: SelectionProps) => {
           <View style={selectionStyle.inputsWrapper}>
             <TextInput
               placeholder="First Name"
-              value={user?.firstName}
+              value={user?.firstName || undefined}
               onChangeText={(text) => updateFirstName(text)}
               style={selectionStyle.txtInput}
             ></TextInput>
             <TextInput
               placeholder="Last Name"
-              value={user?.lastName}
+              value={user?.lastName || undefined}
               onChangeText={(text) => updateLastName(text)}
               style={selectionStyle.txtInput}
             ></TextInput>

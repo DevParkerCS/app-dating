@@ -1,8 +1,9 @@
 import express, { Request, Response } from "express";
 import PrivateUser, { PrivateUserAttributes } from "../Models/PrivateUser";
-import PublicUser, { PublicUserAttributes } from "../Models/PublicUser";
+import PublicUser from "../Models/PublicUser";
 import { isValidEmail, isValidPassword } from "../utils/Auth";
 import bcrypt from "bcrypt";
+import { PublicUserType } from "../../../shared/types/user";
 
 const router = express.Router();
 
@@ -12,7 +13,7 @@ type LoginReqType = {
 };
 
 type FoundUserType = PrivateUserAttributes & {
-  publicUser?: PublicUserAttributes | null;
+  publicUser?: PublicUserType | null;
 };
 
 router.post("/login", async (req: Request, res: Response) => {
@@ -89,7 +90,7 @@ router.post("/signup", async (req: Request, res: Response) => {
 });
 
 type UpdateReqBody = {
-  user: PublicUserAttributes;
+  user: PublicUserType;
 };
 
 router.patch("/updateProfile", async (req: Request, res: Response) => {

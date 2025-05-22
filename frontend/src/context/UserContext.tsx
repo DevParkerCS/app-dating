@@ -1,40 +1,10 @@
 import { createContext, ReactNode, useContext, useState } from "react";
-
-type GeoPoint = {
-  type: "Point";
-  coordinates: [number, number];
-};
-
-export type PromptType = {
-  title: string;
-  text: string;
-};
-
-type InterestedIn = {
-  minAge: number;
-  maxAge: number;
-  maxDistance: number;
-  genders: string[];
-};
-
-export type User = {
-  id: number;
-  firstName: string;
-  lastName: string;
-  dob: Date;
-  gender: string;
-  interestedIn: InterestedIn;
-  curLikes: number;
-  location: GeoPoint;
-  imageUrls: string[];
-  prompts: PromptType[];
-  is_profile_complete: boolean;
-};
+import { PublicUserType } from "../../../shared/types/user";
 
 type UserContextType = {
-  user: User | null;
-  setUser: React.Dispatch<React.SetStateAction<User | null>>;
-  logIn: (userInfo: User) => void;
+  user: PublicUserType | null;
+  setUser: React.Dispatch<React.SetStateAction<PublicUserType | null>>;
+  logIn: (userInfo: PublicUserType) => void;
   logOut: () => void;
 };
 
@@ -47,12 +17,12 @@ type UserProviderProps = {
 };
 
 export const UserProvider = ({ children }: UserProviderProps) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<PublicUserType | null>(null);
 
-  const logIn = (userInfo: User) => {
+  const logIn = (userInfo: PublicUserType) => {
     setUser({
       ...userInfo,
-      dob: new Date(userInfo.dob),
+      dob: userInfo?.dob ? new Date(userInfo.dob) : null,
     });
   };
 
@@ -68,7 +38,7 @@ export const UserProvider = ({ children }: UserProviderProps) => {
 };
 
 type UserField = keyof Omit<
-  User,
+  PublicUserType,
   "location" | "id" | "curLikes" | "imageUrls" | "prompts"
 >;
 
@@ -81,7 +51,10 @@ export const useUser = () => {
 
   const { user, setUser, logIn, logOut } = context;
 
-  const updateField = <K extends UserField>(field: K, value: User[K]) => {
+  const updateField = <K extends UserField>(
+    field: K,
+    value: PublicUserType[K]
+  ) => {
     setUser((prev) => {
       if (!prev) return null;
       return {

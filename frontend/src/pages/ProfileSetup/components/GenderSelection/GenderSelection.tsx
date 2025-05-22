@@ -61,7 +61,10 @@ export const GenderSelection = ({ setCurStep }: SelectionProps) => {
                 Next What Is Your Gender?
               </Text>
             </View>
-            <Picker selectedValue={user?.gender} onValueChange={handleChange}>
+            <Picker
+              selectedValue={user?.gender || undefined}
+              onValueChange={handleChange}
+            >
               {genderOptions.map((option) => (
                 <Picker.Item
                   key={option.value}

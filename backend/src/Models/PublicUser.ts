@@ -1,44 +1,17 @@
 import { DataTypes, Model, Optional } from "sequelize";
 import { sequelize } from "../database";
+import {
+  GeoPoint,
+  InterestedIn,
+  Prompt,
+  PublicUserType,
+} from "../../../shared/types/user";
 
-type GeoPoint = {
-  type: "Point";
-  coordinates: [number, number]; // [Longitude, Latitude]
-};
-
-type Prompt = {
-  title: string;
-  text: string;
-};
-
-type InterestedIn = {
-  minAge: number;
-  maxAge: number;
-  maxDistance: number;
-  genders: string[];
-};
-
-export type PublicUserAttributes = {
-  id: number;
-  privateId: number;
-  firstName: string | null;
-  lastName: string | null;
-  dob: Date | null;
-  gender: string | null;
-  interestedIn: InterestedIn;
-  curLikes: number | null;
-  location: GeoPoint | null;
-  imageUrls: string[];
-  prompts: Prompt[];
-  is_profile_complete: boolean;
-};
-
-interface PublicUserCreationAttributes
-  extends Optional<PublicUserAttributes, "id"> {}
+interface PublicUserCreationAttributes extends Optional<PublicUserType, "id"> {}
 
 class PublicUser
-  extends Model<PublicUserAttributes, PublicUserCreationAttributes>
-  implements PublicUserAttributes
+  extends Model<PublicUserType, PublicUserCreationAttributes>
+  implements PublicUserType
 {
   public id!: number;
   public privateId!: number;

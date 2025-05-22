@@ -14,8 +14,6 @@ import { RootStackParamList } from "../../types/navigations";
 import styles from "./ChatsStyles";
 import { useNavigation } from "@react-navigation/native";
 
-type Props = NativeStackScreenProps<RootStackParamList, "Chats">;
-
 export const Chats = () => {
   return (
     <SafeAreaView style={{ flex: 1 }}>

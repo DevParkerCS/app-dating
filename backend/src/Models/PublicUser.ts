@@ -2,6 +2,7 @@ import { DataTypes, Model, Optional } from "sequelize";
 import { sequelize } from "../database";
 import {
   GeoPoint,
+  ImageUrl,
   InterestedIn,
   Prompt,
   PublicUserType,
@@ -22,7 +23,7 @@ class PublicUser
   public interestedIn!: InterestedIn;
   public curLikes!: number;
   public location!: GeoPoint;
-  public imageUrls!: string[];
+  public imageUrls!: ImageUrl[];
   public prompts!: Prompt[];
   public is_profile_complete!: boolean;
 }

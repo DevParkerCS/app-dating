@@ -21,7 +21,7 @@ export const Explore = () => {
         </View>
         <View style={styles.profileImgWrapper}>
           <ImageBackground
-            source={{ uri: user?.imageUrls[3] }}
+            source={{ uri: user?.imageUrls[3].url }}
             style={styles.profileImg}
             resizeMode="cover"
           />
@@ -34,7 +34,7 @@ export const Explore = () => {
         </View>
         <View style={styles.profileImgWrapper}>
           <ImageBackground
-            source={{ uri: user?.imageUrls[1] }}
+            source={{ uri: user?.imageUrls[1].url }}
             style={styles.profileImg}
           />
         </View>

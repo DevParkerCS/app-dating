@@ -3,7 +3,7 @@ import PrivateUser, { PrivateUserAttributes } from "../Models/PrivateUser";
 import PublicUser from "../Models/PublicUser";
 import { isValidEmail, isValidPassword } from "../utils/Auth";
 import bcrypt from "bcrypt";
-import { PublicUserType } from "../../../shared/types/user";
+import { ImageUrl, PublicUserType } from "../../../shared/types/user";
 
 const router = express.Router();
 
@@ -99,6 +99,31 @@ router.patch("/updateProfile", async (req: Request, res: Response) => {
     const [numRowsUpdated] = await PublicUser.update(user, {
       where: { id: user.id },
     });
+
+    if (numRowsUpdated == 0) {
+      res.status(404).json({ message: "Unable To Update User" });
+      return;
+    }
+
+    res.status(200).json({ message: "Update Successful" });
+  } catch (e) {
+    res.status(500).json({ message: "Server Error" });
+  }
+});
+
+type UpdateImagesBody = {
+  images: ImageUrl[];
+  id: number;
+};
+
+router.patch("/updateImages", async (req: Request, res: Response) => {
+  const { images, id }: UpdateImagesBody = req.body;
+
+  try {
+    const [numRowsUpdated] = await PublicUser.update(
+      { imageUrls: images },
+      { where: { id } }
+    );
 
     if (numRowsUpdated == 0) {
       res.status(404).json({ message: "Unable To Update User" });

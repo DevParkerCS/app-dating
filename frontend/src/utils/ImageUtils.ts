@@ -4,11 +4,12 @@ import {
   getDownloadURL,
   deleteObject,
   getStorage,
+  listAll,
 } from "firebase/storage";
 import { FirebaseError } from "firebase/app";
 import { storage } from "../firebase/config";
 
-export const uploadImage = async (uri: string, userId: string) => {
+export const uploadImage = async (uri: string, userId: number) => {
   try {
     // Convert URI to blob
     const response = await fetch(uri);
@@ -35,8 +36,6 @@ export const uploadImage = async (uri: string, userId: string) => {
 
 export const deleteImage = async (path: string) => {
   try {
-    const storage = getStorage();
-
     const fileref = ref(storage, path);
 
     await deleteObject(fileref);
@@ -45,5 +44,21 @@ export const deleteImage = async (path: string) => {
       console.log("Error deleting image:", error.code);
       throw error;
     }
+  }
+};
+
+export const getImages = async (userId: number) => {
+  try {
+    const folderRef = ref(storage, `users/${userId}`);
+    const result = await listAll(folderRef);
+
+    const urls = await Promise.all(
+      result.items.map((itemRef) => getDownloadURL(itemRef))
+    );
+
+    return urls;
+  } catch (e) {
+    console.log("Error getting images", e);
+    throw e;
   }
 };

@@ -4,27 +4,8 @@ export default StyleSheet.create({
   imageGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    justifyContent: "flex-start",
     gap: 10,
     marginTop: 10,
-  },
-  imageContainer: {
-    width: "31%", // Approximately 3 images per row with gap
-    aspectRatio: 1,
-    position: "relative",
-  },
-  image: {
-    width: "100%",
-    height: "100%",
-    borderRadius: 8,
-  },
-  removeButton: {
-    position: "absolute",
-    right: -10,
-    top: -10,
-    backgroundColor: "white",
-    borderRadius: 12,
-    padding: 2,
   },
   addImageButton: {
     width: "31%",
@@ -46,5 +27,16 @@ export default StyleSheet.create({
     textAlign: "center",
     color: "#666",
     marginTop: 10,
+  },
+  uploadingTxt: {
+    fontSize: 24,
+    marginTop: 10,
+    marginBottom: 10,
+    textAlign: "center",
+  },
+  loadingTxt: {
+    marginTop: 10,
+    fontSize: 23,
+    textAlign: "center",
   },
 });

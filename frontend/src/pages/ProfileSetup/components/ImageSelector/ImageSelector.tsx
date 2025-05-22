@@ -1,7 +1,6 @@
 import * as ImagePicker from "expo-image-picker";
 import {
   View,
-  Image,
   TouchableOpacity,
   ScrollView,
   Text,
@@ -12,20 +11,21 @@ import { Ionicons } from "@expo/vector-icons";
 import { useUser } from "../../../../context/UserContext";
 import { SelectionProps } from "../../ProfileSetup";
 import styles from "./ImageSelectorStyles";
-import { useEffect, useState } from "react";
-import { deleteImage, uploadImage } from "../../../../utils/ImageUtils";
+import { useEffect, useRef, useState } from "react";
+import { getImages, uploadImage } from "../../../../utils/ImageUtils";
 import axios from "axios";
 import * as ImageManipulator from "expo-image-manipulator";
 import selectionStyle from "../../SelectionStyle";
 import { ImageUrl } from "../../../../../../shared/types/user";
-import { FirebaseError } from "firebase/app";
+import { DisplayedImage } from "./components/DisplayedImage";
 
 export const ImageSelector = ({ setCurStep }: SelectionProps) => {
-  const [readyToUpload, setReadyToUpload] = useState<boolean>(false);
   const [isUploading, setIsUploading] = useState(false);
   const [isValidating, setIsValidating] = useState(false);
+  const [readyToUpload, setReadyToUpload] = useState(false);
   const { user, setUser } = useUser();
   const [tmpImages, setTmpImages] = useState<ImageUrl[]>(user?.imageUrls || []);
+  const [loadingImages, setLoadingImages] = useState(true);
 
   const pickImage = async () => {
     const permissionResult =
@@ -75,118 +75,98 @@ export const ImageSelector = ({ setCurStep }: SelectionProps) => {
     }
   };
 
-  const removeImage = async (indexToRemove: number) => {
-    try {
-      // If the image has already been added to Firebase, remove it
-      if (!tmpImages[indexToRemove].is_new) {
-        await deleteImage(tmpImages[indexToRemove].url);
-
-        // Make sure to remove the URL from the user too
-        setUser((prev) => {
-          if (!prev) {
-            return null;
-          }
-
-          const newUser = {
-            ...prev,
-            imageUrls: prev.imageUrls.filter(
-              (img) => img.url !== tmpImages[indexToRemove].url
-            ),
-          };
-
-          setTmpImages(newUser.imageUrls);
-
-          return newUser;
-        });
-        setReadyToUpload(true);
-      }
-      setTmpImages([
-        ...tmpImages.filter((_, index) => index !== indexToRemove),
-      ]);
-    } catch (e) {
-      if (e instanceof FirebaseError) {
-        switch (e.code) {
-          case "storage/object-not-found":
-            setUser((prev) => {
-              if (!prev) {
-                return null;
-              }
-
-              const newUser = {
-                ...prev,
-                imageUrls: prev.imageUrls.filter(
-                  (img) => img.url !== tmpImages[indexToRemove].url
-                ),
-              };
-
-              setTmpImages(newUser.imageUrls);
-
-              return newUser;
-            });
-            setReadyToUpload(true);
-        }
-      } else {
-        console.log("Error removing image");
-      }
-    }
-  };
-
   const handleUpload = async () => {
-    if (user) {
-      setIsUploading(true);
-      for (let i = 0; i < tmpImages.length; i++) {
-        try {
-          if (tmpImages[i].is_new) {
-            const imageUrl = await uploadImage(
-              tmpImages[i].url,
-              user.id.toString()
-            );
-            setUser((prevState) => {
-              if (prevState == null) {
-                return prevState;
-              }
+    if (!user) return;
 
-              return {
-                ...prevState,
-                imageUrls: [
-                  ...prevState.imageUrls,
-                  { url: imageUrl, is_new: false },
-                ],
-              };
-            });
+    setIsUploading(true);
 
-            setTmpImages((prev) => {
-              prev[i].is_new = false;
-              prev[i].url = imageUrl;
-              return prev;
-            });
-          }
-        } catch (e) {
-          return;
+    for (let i = 0; i < tmpImages.length; i++) {
+      try {
+        if (tmpImages[i].is_new) {
+          const imageUrl = await uploadImage(tmpImages[i].url, user.id);
+
+          setTmpImages((prev) => {
+            const newTmp = [...prev];
+            newTmp[i].is_new = false;
+            newTmp[i].url = imageUrl;
+            return newTmp;
+          });
         }
+      } catch (e) {
+        console.error("Upload error:", e);
+        return;
       }
-
-      setReadyToUpload(true);
     }
+
+    setUser((prevState) =>
+      prevState
+        ? {
+            ...prevState,
+            imageUrls: tmpImages,
+          }
+        : null
+    );
+
+    setReadyToUpload(true);
   };
 
   const updateUser = async () => {
-    const response = await axios.patch(
-      "http://10.20.8.13:3000/users/updateProfile",
-      {
-        user,
-      }
-    );
-    setIsUploading(false);
+    try {
+      // Figure out if tmpImages is what I should use.
+      const response = await axios.patch(
+        "http://10.20.8.13:3000/users/updateImages",
+        {
+          images: tmpImages,
+          id: user?.id,
+        }
+      );
+      setIsUploading(false);
+    } catch (e) {
+      console.log("Error updating user", e);
+      throw e;
+    }
+  };
+
+  const handleUploadClick = async () => {
+    try {
+      await handleUpload();
+    } catch (e) {
+      console.log("Error in upload click");
+    }
   };
 
   useEffect(() => {
     if (readyToUpload) {
       setReadyToUpload(false);
-      updateUser();
-      // setCurStep((prev) => prev + 1);
+      const upload = async () => {
+        try {
+          await updateUser();
+          setCurStep((prev) => prev + 1);
+        } catch (e) {
+          console.log("error updating user");
+        }
+      };
+
+      upload();
     }
-  }, [readyToUpload, user]);
+  }, [readyToUpload]);
+
+  useEffect(() => {
+    setLoadingImages(true);
+    if (user) {
+      const getAllImages = async () => {
+        const urls = await getImages(user.id);
+        setTmpImages((prev) => {
+          const currentUrls = prev.map((img) => img.url);
+          const newUrls = urls.filter((url) => !currentUrls.includes(url));
+          const newEntries = newUrls.map((url) => ({ is_new: false, url }));
+          return [...prev, ...newEntries];
+        });
+        setLoadingImages(false);
+      };
+      getAllImages();
+    }
+  }, []);
 
   return (
     <View style={[selectionStyle.container]}>
@@ -194,21 +174,23 @@ export const ImageSelector = ({ setCurStep }: SelectionProps) => {
         <Text style={selectionStyle.subTitle}>Let's Get Some Pics!</Text>
         <ScrollView contentContainerStyle={styles.imageGrid}>
           {tmpImages.map((img, index) => (
-            <View key={index} style={styles.imageContainer}>
-              <Image source={{ uri: img.url }} style={styles.image} />
-              <TouchableOpacity
-                style={styles.removeButton}
-                onPress={() => removeImage(index)}
-              >
-                <Ionicons name="close-circle" size={24} color="red" />
-              </TouchableOpacity>
-            </View>
+            <DisplayedImage
+              img={img}
+              key={index}
+              index={index}
+              tmpImages={tmpImages}
+              setTmpImages={setTmpImages}
+            />
           ))}
 
           {tmpImages.length < 6 && (
             <TouchableOpacity
               style={styles.addImageButton}
-              onPress={!isUploading ? pickImage : () => {}}
+              onPress={
+                !isUploading && !isValidating && !loadingImages
+                  ? pickImage
+                  : () => {}
+              }
             >
               {!isValidating ? (
                 <>
@@ -222,24 +204,32 @@ export const ImageSelector = ({ setCurStep }: SelectionProps) => {
           )}
         </ScrollView>
 
-        <Text style={styles.helpText}>
-          {tmpImages.length + "/6 photos selected"}
-        </Text>
-        {isUploading ? (
+        {loadingImages ? (
           <View>
-            <Text>Uploading Images</Text>
-            <ActivityIndicator />
+            <Text style={styles.loadingTxt}>Loading Images...</Text>
           </View>
         ) : (
-          <Pressable
-            style={selectionStyle.btn}
-            disabled={isValidating || isUploading}
-            onPress={handleUpload}
-          >
-            <Text style={selectionStyle.btnTxt}>
-              {isValidating ? "Validating Images..." : "Upload"}
+          <View>
+            <Text style={styles.helpText}>
+              {tmpImages.length + "/6 photos selected"}
             </Text>
-          </Pressable>
+            {isUploading ? (
+              <View>
+                <Text style={styles.uploadingTxt}>Uploading Images...</Text>
+                <ActivityIndicator size={"large"} />
+              </View>
+            ) : (
+              <Pressable
+                style={selectionStyle.btn}
+                disabled={isValidating || isUploading}
+                onPress={handleUploadClick}
+              >
+                <Text style={selectionStyle.btnTxt}>
+                  {isValidating ? "Validating Images..." : "Upload"}
+                </Text>
+              </Pressable>
+            )}
+          </View>
         )}
       </View>
     </View>

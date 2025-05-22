@@ -5,6 +5,7 @@ import {
   deleteObject,
   getStorage,
 } from "firebase/storage";
+import { FirebaseError } from "firebase/app";
 import { storage } from "../firebase/config";
 
 export const uploadImage = async (uri: string, userId: string) => {
@@ -40,7 +41,9 @@ export const deleteImage = async (path: string) => {
 
     await deleteObject(fileref);
   } catch (error) {
-    console.error("Error deleting image:", error);
-    throw error;
+    if (error instanceof FirebaseError) {
+      console.log("Error deleting image:", error.code);
+      throw error;
+    }
   }
 };

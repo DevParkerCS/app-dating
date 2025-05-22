@@ -18,6 +18,7 @@ import axios from "axios";
 import * as ImageManipulator from "expo-image-manipulator";
 import selectionStyle from "../../SelectionStyle";
 import { ImageUrl } from "../../../../../../shared/types/user";
+import { FirebaseError } from "firebase/app";
 
 export const ImageSelector = ({ setCurStep }: SelectionProps) => {
   const [readyToUpload, setReadyToUpload] = useState<boolean>(false);
@@ -37,6 +38,7 @@ export const ImageSelector = ({ setCurStep }: SelectionProps) => {
 
     try {
       setIsValidating(true);
+      // Opens OS image selection tool to choose up to the remaining amount
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: "images",
         quality: 0,
@@ -49,6 +51,8 @@ export const ImageSelector = ({ setCurStep }: SelectionProps) => {
 
       if (!result.canceled && result.assets) {
         const pickedImages = result.assets;
+
+        // Loop through all async calls for parallel calls
         const manipulationPromises = pickedImages.map(async (image) => {
           const manipulatedImage = await ImageManipulator.manipulateAsync(
             image.uri,
@@ -58,6 +62,8 @@ export const ImageSelector = ({ setCurStep }: SelectionProps) => {
 
           return { url: manipulatedImage.uri, is_new: true };
         });
+
+        // Calls async functions parallel
         const newImages = await Promise.all(manipulationPromises);
         setTmpImages((prev) => [...prev, ...newImages]);
       }
@@ -71,27 +77,57 @@ export const ImageSelector = ({ setCurStep }: SelectionProps) => {
 
   const removeImage = async (indexToRemove: number) => {
     try {
+      // If the image has already been added to Firebase, remove it
       if (!tmpImages[indexToRemove].is_new) {
         await deleteImage(tmpImages[indexToRemove].url);
 
+        // Make sure to remove the URL from the user too
         setUser((prev) => {
           if (!prev) {
             return null;
           }
 
-          return {
+          const newUser = {
             ...prev,
             imageUrls: prev.imageUrls.filter(
               (img) => img.url !== tmpImages[indexToRemove].url
             ),
           };
+
+          setTmpImages(newUser.imageUrls);
+
+          return newUser;
         });
+        setReadyToUpload(true);
       }
       setTmpImages([
         ...tmpImages.filter((_, index) => index !== indexToRemove),
       ]);
     } catch (e) {
-      console.log("Error removing image");
+      if (e instanceof FirebaseError) {
+        switch (e.code) {
+          case "storage/object-not-found":
+            setUser((prev) => {
+              if (!prev) {
+                return null;
+              }
+
+              const newUser = {
+                ...prev,
+                imageUrls: prev.imageUrls.filter(
+                  (img) => img.url !== tmpImages[indexToRemove].url
+                ),
+              };
+
+              setTmpImages(newUser.imageUrls);
+
+              return newUser;
+            });
+            setReadyToUpload(true);
+        }
+      } else {
+        console.log("Error removing image");
+      }
     }
   };
 
@@ -109,6 +145,7 @@ export const ImageSelector = ({ setCurStep }: SelectionProps) => {
               if (prevState == null) {
                 return prevState;
               }
+
               return {
                 ...prevState,
                 imageUrls: [
@@ -116,6 +153,12 @@ export const ImageSelector = ({ setCurStep }: SelectionProps) => {
                   { url: imageUrl, is_new: false },
                 ],
               };
+            });
+
+            setTmpImages((prev) => {
+              prev[i].is_new = false;
+              prev[i].url = imageUrl;
+              return prev;
             });
           }
         } catch (e) {
@@ -141,7 +184,7 @@ export const ImageSelector = ({ setCurStep }: SelectionProps) => {
     if (readyToUpload) {
       setReadyToUpload(false);
       updateUser();
-      setCurStep((prev) => prev + 1);
+      // setCurStep((prev) => prev + 1);
     }
   }, [readyToUpload, user]);
 
@@ -190,7 +233,7 @@ export const ImageSelector = ({ setCurStep }: SelectionProps) => {
         ) : (
           <Pressable
             style={selectionStyle.btn}
-            disabled={isValidating}
+            disabled={isValidating || isUploading}
             onPress={handleUpload}
           >
             <Text style={selectionStyle.btnTxt}>

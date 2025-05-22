@@ -15,6 +15,11 @@ export type Prompt = {
   text: string;
 };
 
+export type ImageUrl = {
+  url: string;
+  is_new: boolean;
+};
+
 export type PublicUserType = {
   id: number;
   privateId: number;
@@ -25,7 +30,7 @@ export type PublicUserType = {
   interestedIn: InterestedIn;
   curLikes: number | null;
   location: GeoPoint | null;
-  imageUrls: string[];
+  imageUrls: ImageUrl[];
   prompts: Prompt[];
   is_profile_complete: boolean;
 };

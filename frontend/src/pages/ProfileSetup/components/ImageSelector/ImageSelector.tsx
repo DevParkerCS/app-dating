@@ -17,13 +17,14 @@ import { uploadImage } from "../../../../utils/UploadImage";
 import axios from "axios";
 import * as ImageManipulator from "expo-image-manipulator";
 import selectionStyle from "../../SelectionStyle";
+import { ImageUrl } from "../../../../../../shared/types/user";
 
 export const ImageSelector = ({ setCurStep }: SelectionProps) => {
   const [readyToUpload, setReadyToUpload] = useState<boolean>(false);
   const [isUploading, setIsUploading] = useState(false);
   const [isValidating, setIsValidating] = useState(false);
   const { user, setUser } = useUser();
-  const [tmpImages, setTmpImages] = useState<string[]>(user?.imageUrls || []);
+  const [tmpImages, setTmpImages] = useState<ImageUrl[]>(user?.imageUrls || []);
 
   const pickImage = async () => {
     const permissionResult =
@@ -54,7 +55,10 @@ export const ImageSelector = ({ setCurStep }: SelectionProps) => {
           { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
         );
 
-        setTmpImages([...tmpImages, manipulatedImage.uri]);
+        setTmpImages([
+          ...tmpImages,
+          { url: manipulatedImage.uri, is_new: true },
+        ]);
         setIsValidating(false);
       }
     } catch (error) {
@@ -72,16 +76,24 @@ export const ImageSelector = ({ setCurStep }: SelectionProps) => {
       setIsUploading(true);
       for (let i = 0; i < tmpImages.length; i++) {
         try {
-          const imageUrl = await uploadImage(tmpImages[i], user.id.toString());
-          setUser((prevState) => {
-            if (prevState == null) {
-              return prevState;
-            }
-            return {
-              ...prevState,
-              imageUrls: [...prevState.imageUrls, imageUrl],
-            };
-          });
+          if (tmpImages[i].is_new) {
+            const imageUrl = await uploadImage(
+              tmpImages[i].url,
+              user.id.toString()
+            );
+            setUser((prevState) => {
+              if (prevState == null) {
+                return prevState;
+              }
+              return {
+                ...prevState,
+                imageUrls: [
+                  ...prevState.imageUrls,
+                  { url: imageUrl, is_new: false },
+                ],
+              };
+            });
+          }
         } catch (e) {
           return;
         }
@@ -114,9 +126,9 @@ export const ImageSelector = ({ setCurStep }: SelectionProps) => {
       <View style={selectionStyle.contentWrapper}>
         <Text style={selectionStyle.subTitle}>Let's Get Some Pics!</Text>
         <ScrollView contentContainerStyle={styles.imageGrid}>
-          {tmpImages.map((uri, index) => (
+          {tmpImages.map((img, index) => (
             <View key={index} style={styles.imageContainer}>
-              <Image source={{ uri }} style={styles.image} />
+              <Image source={{ uri: img.url }} style={styles.image} />
               <TouchableOpacity
                 style={styles.removeButton}
                 onPress={() => removeImage(index)}
